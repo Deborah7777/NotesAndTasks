@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "NotesAndTasks",
-    "slug": "NotesAndTasks",
+    "name": "App1",
+    "slug": "App1",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -23,11 +23,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "39644926-965c-4669-96b6-11f78ad7ee48"
-      }
     }
   }
 }
