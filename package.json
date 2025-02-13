@@ -32,7 +32,7 @@
     "@babel/core": "^7.20.0",
     "@types/react": "~18.3.12",
     "eas-cli": "^15.0.4",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.3"
   },
   "private": true
 }
