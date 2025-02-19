@@ -17,10 +17,11 @@ import { Picker } from '@react-native-picker/picker';
 export default function AddNoteScreen({ navigation }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('note');
+  const [category, setCategory] = useState('note'); // Initialisez avec une valeur par défaut
   const [photo, setPhoto] = useState(null);
   const [location, setLocation] = useState(null);
 
+  // Prendre une photo
   const takePhoto = async () => {
     try {
       const { status } = await ImagePicker.requestCameraPermissionsAsync();
@@ -44,6 +45,7 @@ export default function AddNoteScreen({ navigation }) {
     }
   };
 
+  // Obtenir la localisation
   const getLocation = async () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
@@ -62,39 +64,31 @@ export default function AddNoteScreen({ navigation }) {
     }
   };
 
+  // Sauvegarder la note
   const saveNote = async () => {
     try {
-        // Récupérer les notes existantes depuis AsyncStorage
-        const savedNotes = await AsyncStorage.getItem('notes');
+      const savedNotes = await AsyncStorage.getItem('notes');
+      const notes = savedNotes ? JSON.parse(savedNotes) : [];
 
-        // Convertir les notes en tableau JavaScript si elles existent, sinon initialiser un tableau vide
-        const notes = savedNotes ? JSON.parse(savedNotes) : [];
+      const newNote = {
+        id: Date.now().toString(),
+        title,
+        description,
+        category,
+        photo,
+        location,
+        date: new Date().toLocaleDateString(),
+        completed: false,
+      };
 
-        // Créer un nouvel objet "note" avec les données actuelles
-        const newNote = {
-            id: Date.now().toString(), // Générer un ID unique basé sur le timestamp actuel
-            title, // Titre de la note (supposé être une variable définie ailleurs)
-            description, // Description de la note (supposé être une variable définie ailleurs)
-            category, // Catégorie de la note (supposé être une variable définie ailleurs)
-            photo, // Photo associée à la note (supposé être une variable définie ailleurs)
-            location, // Localisation associée à la note (supposé être une variable définie ailleurs)
-            date: new Date().toLocaleDateString(), // Date actuelle au format local
-            completed: false, // Statut de la note (non complétée par défaut)
-        };
+      const updatedNotes = [...notes, newNote];
+      await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
 
-        // Ajouter la nouvelle note au tableau existant
-        const updatedNotes = [...notes, newNote];
-
-        // Sauvegarder le tableau mis à jour dans AsyncStorage
-        await AsyncStorage.setItem('notes', JSON.stringify(updatedNotes));
-
-        // Revenir à l'écran précédent après la sauvegarde
-        navigation.goBack();
+      navigation.goBack(); // Revenir à l'écran précédent
     } catch (error) {
-        // Gérer les erreurs éventuelles lors de la sauvegarde
-        console.error('Erreur sauvegarde:', error);
+      console.error('Erreur sauvegarde:', error);
     }
-};
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -118,10 +112,9 @@ export default function AddNoteScreen({ navigation }) {
         <Picker
           selectedValue={category}
           onValueChange={(itemValue) => setCategory(itemValue)}
-
         >
           <Picker.Item label="Note" value="note" />
-          <Picker.Item label="Tâche" value="tâche" />
+          <Picker.Item label="Tâche" value="task" />
         </Picker>
       </View>
 
@@ -129,13 +122,14 @@ export default function AddNoteScreen({ navigation }) {
         <Text style={styles.buttonText}>📷 Prendre une photo</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.button, styles.locationButton]} onPress={getLocation}>
+      <TouchableOpacity
+        style={[styles.button, styles.locationButton]}
+        onPress={getLocation}
+      >
         <Text style={styles.buttonText}>📍 Ajouter la localisation</Text>
       </TouchableOpacity>
 
-      {photo && (
-        <Image source={{ uri: photo }} style={styles.preview} />
-      )}
+      {photo && <Image source={{ uri: photo }} style={styles.preview} />}
 
       {location && (
         <Text style={styles.locationText}>
@@ -143,7 +137,10 @@ export default function AddNoteScreen({ navigation }) {
         </Text>
       )}
 
-      <TouchableOpacity style={[styles.button, styles.saveButton]} onPress={saveNote}>
+      <TouchableOpacity
+        style={[styles.button, styles.saveButton]}
+        onPress={saveNote}
+      >
         <Text style={styles.buttonText}>Enregistrer</Text>
       </TouchableOpacity>
     </ScrollView>
@@ -172,9 +169,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginBottom: 16,
     overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
   },
   button: {
     backgroundColor: '#2196F3',

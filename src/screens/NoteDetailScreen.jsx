@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
+import MapView, { Marker } from 'react-native-maps';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -122,6 +123,25 @@ export default function NoteDetailScreen({ route, navigation }) {
         >
           <Text style={styles.buttonText}>⏰ Définir un rappel</Text>
         </TouchableOpacity>
+      )}
+
+{note.location && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: note.location.latitude,
+            longitude: note.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: note.location.latitude,
+              longitude: note.location.longitude,
+            }}
+          />
+        </MapView>
       )}
 
       <TouchableOpacity

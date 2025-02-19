@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,91 +7,97 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+} from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
+import { Picker } from '@react-native-picker/picker';
 
 export default function HomeScreen({ navigation }) {
-  console.log(navigation); // Affiche les informations de navigation dans la console
-  const [notes, setNotes] = useState([]); // État pour stocker les notes
-  const [filter, setFilter] = useState("all"); // État pour stocker le filtre sélectionné
-  const [searchText, setSearchText] = useState(""); // État pour stocker le texte de recherche
+  const [notes, setNotes] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [searchText, setSearchText] = useState('');
+  const [period, setPeriod] = useState('day');
 
-  // Charger les notes à chaque fois que l'écran est affiché
+  // Définir la fonction filterTasksByPeriod
+  const filterTasksByPeriod = (tasks, period) => {
+    const now = moment();
+    return tasks.filter(task => {
+      if (period === 'day') {
+        return moment(task.date).isSame(now, 'day');
+      } else if (period === 'week') {
+        return moment(task.date).isSame(now, 'week');
+      } else if (period === 'month') {
+        return moment(task.date).isSame(now, 'month');
+      }
+      return false;
+    });
+  };
+
+  // Charger les notes lorsque l'écran est focus
   useEffect(() => {
-    const unsubscribe = navigation.addListener("focus", () => {
+    const unsubscribe = navigation.addListener('focus', () => {
       loadNotes();
     });
 
     return unsubscribe;
   }, [navigation]);
 
-  // Fonction pour récupérer les notes enregistrées
+  // Charger les notes depuis AsyncStorage
   const loadNotes = async () => {
     try {
-      const savedNotes = await AsyncStorage.getItem("notes");
+      const savedNotes = await AsyncStorage.getItem('notes');
       if (savedNotes) {
         setNotes(JSON.parse(savedNotes));
       }
     } catch (error) {
-      console.error("Erreur chargement notes:", error);
+      console.error('Error loading notes:', error);
     }
   };
 
+  // Filtrer les notes
   const filteredNotes = notes.filter((note) => {
     const matchesFilter =
-      filter === "all" ||
-      (filter === "completed" && note.completed) ||
-      (filter === "pending" && !note.completed) ||
-      (filter === "notes" && note.category === "note") ||
-      (filter === "tasks" && note.category === "tâche");
+      filter === 'all' ||
+      (filter === 'completed' && note.completed) ||
+      (filter === 'pending' && !note.completed) ||
+      (filter === 'notes' && note.category === 'note') ||
+      (filter === 'tasks' && note.category === 'task');
 
+    const matchesPeriod = filterTasksByPeriod([note], period).length > 0;
     const matchesSearch =
       note.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      note.description.toLowerCase().includes(searchText.toLowerCase()); //toLowerCase est pour transformer le tout en minuscule
+      note.description.toLowerCase().includes(searchText.toLowerCase());
 
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesSearch && matchesPeriod;
   });
 
+  // Composant pour les boutons de filtre
   const FilterButton = ({ title, value }) => (
     <TouchableOpacity
-      style={[
-        styles.filterButton,
-        filter === value && styles.filterButtonActive,
-      ]}
+      style={[styles.filterButton, filter === value && styles.filterButtonActive]}
       onPress={() => setFilter(value)}
     >
-      <Text
-        style={[
-          styles.filterButtonText,
-          filter === value && styles.filterButtonTextActive,
-        ]}
-      >
+      <Text style={[styles.filterButtonText, filter === value && styles.filterButtonTextActive]}>
         {title}
       </Text>
     </TouchableOpacity>
   );
 
+  // Rendu d'un élément de la liste
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.noteItem}
-      onPress={() => navigation.navigate("NoteDetail", { note: item })}
+      onPress={() => navigation.navigate('NoteDetail', { note: item })}
     >
       <View style={styles.noteHeader}>
         <Text style={styles.categoryIcon}>
-          {item.category === "note" ? "📝" : "✓"}
+          {item.category === 'note' ? '📝' : '✓'}
         </Text>
         <View style={styles.noteContent}>
-          <Text
-            style={[styles.noteTitle, item.completed && styles.completedText]}
-          >
+          <Text style={[styles.noteTitle, item.completed && styles.completedText]}>
             {item.title}
           </Text>
-          <Text
-            style={[
-              styles.noteDescription,
-              item.completed && styles.completedText,
-            ]}
-          >
+          <Text style={[styles.noteDescription, item.completed && styles.completedText]}>
             {item.description}
           </Text>
         </View>
@@ -113,11 +119,7 @@ export default function HomeScreen({ navigation }) {
         onChangeText={setSearchText}
       />
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
-      >
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
         <FilterButton title="Tout" value="all" />
         <FilterButton title="Notes" value="notes" />
         <FilterButton title="Tâches" value="tasks" />
@@ -125,9 +127,19 @@ export default function HomeScreen({ navigation }) {
         <FilterButton title="En cours" value="pending" />
       </ScrollView>
 
+      <Picker
+        selectedValue={period}
+        onValueChange={(itemValue) => setPeriod(itemValue)}
+        style={styles.periodPicker}
+      >
+        <Picker.Item label="Aujourd'hui" value="day" />
+        <Picker.Item label="Cette semaine" value="week" />
+        <Picker.Item label="Ce mois" value="month" />
+      </Picker>
+
       <TouchableOpacity
         style={styles.addButton}
-        onPress={() => navigation.navigate("AddNote")}
+        onPress={() => navigation.navigate('AddNote')}
       >
         <Text style={styles.addButtonText}>+ Nouvelle Note</Text>
       </TouchableOpacity>
@@ -145,67 +157,63 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: '#f5f5f5',
     padding: 16,
   },
   searchInput: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
   },
   filterContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     marginBottom: 10,
     height: 10,
   },
   filterButton: {
-    backgroundColor: "#e0e0e0",
+    backgroundColor: '#e0e0e0',
     padding: 8,
     borderRadius: 5,
     marginRight: 8,
-    // height:90,
-    // flex:1,
-    // alignItems:'center',
-    // justifyContent:'center'
   },
   filterButtonActive: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: '#4CAF50',
   },
   filterButtonText: {
-    color: "black",
+    color: 'black',
   },
   filterButtonTextActive: {
-    color: "white",
+    color: 'white',
   },
   addButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: '#4CAF50',
     padding: 15,
     borderRadius: 5,
-    alignItems: "center",
+    alignItems: 'center',
     marginVertical: 10,
   },
   addButtonText: {
-    color: "white",
-    fontWeight: "bold",
+    color: 'white',
+    fontWeight: 'bold',
   },
   list: {
     flex: 1,
   },
   noteItem: {
-    backgroundColor: "white",
+    backgroundColor: 'white',
     padding: 16,
     borderRadius: 8,
     marginBottom: 8,
     elevation: 2,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
   noteHeader: {
-    flexDirection: "row",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   categoryIcon: {
     fontSize: 20,
@@ -216,25 +224,29 @@ const styles = StyleSheet.create({
   },
   noteTitle: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   noteDescription: {
     fontSize: 14,
-    color: "#666",
+    color: '#666',
   },
   completedText: {
-    textDecorationLine: "line-through",
-    color: "#999",
+    textDecorationLine: 'line-through',
+    color: '#999',
   },
   noteMetadata: {
-    alignItems: "flex-end",
+    alignItems: 'flex-end',
   },
   noteDate: {
     fontSize: 12,
-    color: "#666",
+    color: '#666',
   },
   noteIcon: {
     fontSize: 12,
     marginTop: 4,
+  },
+  periodPicker: {
+    backgroundColor: 'white',
+    marginBottom: 10,
   },
 });
