@@ -7,14 +7,20 @@ import {
   TouchableOpacity,
   TextInput,
   ScrollView,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from 'expo-location';
+import MapView, { Marker } from 'react-native-maps';
 
 export default function HomeScreen({ navigation }) {
   console.log(navigation); // Affiche les informations de navigation dans la console
   const [notes, setNotes] = useState([]); // État pour stocker les notes
   const [filter, setFilter] = useState("all"); // État pour stocker le filtre sélectionné
   const [searchText, setSearchText] = useState(""); // État pour stocker le texte de recherche
+  const [location, setLocation] = useState(null); // État pour stocker la localisation
+  const [errorMsg, setErrorMsg] = useState(null); // État pour stocker les erreurs
+  const [showMap, setShowMap] = useState(false); // État pour afficher/masquer la carte
 
   // Charger les notes à chaque fois que l'écran est affiché
   useEffect(() => {
@@ -37,6 +43,21 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
+  // Demander la permission de localisation et récupérer la position
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        Alert.alert('Permission refusée', 'Vous devez autoriser l\'accès à la localisation pour utiliser cette fonctionnalité.');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
+
   const filteredNotes = notes.filter((note) => {
     const matchesFilter =
       filter === "all" ||
@@ -47,7 +68,7 @@ export default function HomeScreen({ navigation }) {
 
     const matchesSearch =
       note.title.toLowerCase().includes(searchText.toLowerCase()) ||
-      note.description.toLowerCase().includes(searchText.toLowerCase()); //toLowerCase est pour transformer le tout en minuscule
+      note.description.toLowerCase().includes(searchText.toLowerCase());
 
     return matchesFilter && matchesSearch;
   });
@@ -126,6 +147,36 @@ export default function HomeScreen({ navigation }) {
       </ScrollView>
 
       <TouchableOpacity
+        style={styles.button}
+        onPress={() => setShowMap(!showMap)}
+      >
+        <Text style={styles.buttonText}>
+          {showMap ? "Masquer la carte" : "Voir la carte"}
+        </Text>
+      </TouchableOpacity>
+
+      {showMap && location && (
+        <MapView
+          style={styles.map}
+          initialRegion={{
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        >
+          <Marker
+            coordinate={{
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            }}
+            title="Votre position"
+            description="Vous êtes ici"
+          />
+        </MapView>
+      )}
+
+      <TouchableOpacity
         style={styles.addButton}
         onPress={() => navigation.navigate("AddNote")}
       >
@@ -164,10 +215,6 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 5,
     marginRight: 8,
-    // height:90,
-    // flex:1,
-    // alignItems:'center',
-    // justifyContent:'center'
   },
   filterButtonActive: {
     backgroundColor: "#4CAF50",
@@ -236,5 +283,22 @@ const styles = StyleSheet.create({
   noteIcon: {
     fontSize: 12,
     marginTop: 4,
+  },
+  button: {
+    backgroundColor: '#2196F3',
+    padding: 15,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  map: {
+    height: 300,
+    width: '100%',
+    marginVertical: 10,
   },
 });
