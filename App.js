@@ -4,6 +4,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import HomeScreen from "./src/screens/HomeScreen";
 import AddNoteScreen from "./src/screens/AddNoteScreen";
 import NoteDetailScreen from "./src/screens/NoteDetailScreen";
+
 const Stack = createStackNavigator();
 
 export default function App() {
