@@ -14,13 +14,13 @@ import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 
 export default function HomeScreen({ navigation }) {
-  console.log(navigation); // Affiche les informations de navigation dans la console
-  const [notes, setNotes] = useState([]); // État pour stocker les notes
-  const [filter, setFilter] = useState("all"); // État pour stocker le filtre sélectionné
-  const [searchText, setSearchText] = useState(""); // État pour stocker le texte de recherche
-  const [location, setLocation] = useState(null); // État pour stocker la localisation
-  const [errorMsg, setErrorMsg] = useState(null); // État pour stocker les erreurs
-  const [showMap, setShowMap] = useState(false); // État pour afficher/masquer la carte
+  console.log(navigation); 
+  const [notes, setNotes] = useState([]); 
+  const [filter, setFilter] = useState("all"); 
+  const [searchText, setSearchText] = useState("");
+  const [location, setLocation] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null); 
+  const [showMap, setShowMap] = useState(false); 
 
   // Charger les notes à chaque fois que l'écran est affiché
   useEffect(() => {
@@ -31,7 +31,7 @@ export default function HomeScreen({ navigation }) {
     return unsubscribe;
   }, [navigation]);
 
-  // Fonction pour récupérer les notes enregistrées
+  
   const loadNotes = async () => {
     try {
       const savedNotes = await AsyncStorage.getItem("notes");
@@ -43,7 +43,7 @@ export default function HomeScreen({ navigation }) {
     }
   };
 
-  // Demander la permission de localisation et récupérer la position
+ 
   useEffect(() => {
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
